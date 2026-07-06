@@ -47,15 +47,15 @@ export class PixelGooseScene {
 
   _initScene() {
     this.scene = new THREE.Scene()
-    this.scene.background = new THREE.Color('#141a33')
-    this.scene.fog = new THREE.Fog('#141a33', 26, 60)
+    this.scene.background = new THREE.Color('#e9ecff')
+    this.scene.fog = new THREE.Fog('#e9ecff', 30, 64)
   }
 
   _initCamera() {
     const { w, h } = this._size()
     this.camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 200)
-    this.camera.position.set(12, 10, 16)
-    this.camera.lookAt(0, 3, 0)
+    this.camera.position.set(9, 8, 15)
+    this.camera.lookAt(0, 4, 0)
   }
 
   _initControls() {
@@ -65,7 +65,7 @@ export class PixelGooseScene {
     this.controls.minDistance = 8
     this.controls.maxDistance = 40
     this.controls.maxPolarAngle = Math.PI * 0.495
-    this.controls.target.set(0, 3, 0)
+    this.controls.target.set(0, 4, 0)
     // 用户开始拖拽时暂停自动旋转
     this.controls.addEventListener('start', () => {
       this._userInteracting = true
@@ -73,12 +73,12 @@ export class PixelGooseScene {
   }
 
   _initLights() {
-    this.scene.add(new THREE.AmbientLight('#8899cc', 0.9))
+    this.scene.add(new THREE.AmbientLight('#ffffff', 1.05))
 
-    const hemi = new THREE.HemisphereLight('#bcd4ff', '#3a3350', 0.6)
+    const hemi = new THREE.HemisphereLight('#ffffff', '#c9b8ff', 0.7)
     this.scene.add(hemi)
 
-    const sun = new THREE.DirectionalLight('#fff3d6', 1.4)
+    const sun = new THREE.DirectionalLight('#fff3d6', 1.3)
     sun.position.set(10, 18, 8)
     sun.castShadow = true
     sun.shadow.mapSize.set(1024, 1024)
@@ -101,8 +101,8 @@ export class PixelGooseScene {
     const tiles = 24
     const tileSize = 3
     const geo = new THREE.PlaneGeometry(tileSize, tileSize)
-    const matA = new THREE.MeshStandardMaterial({ color: '#2f7d54', roughness: 1 })
-    const matB = new THREE.MeshStandardMaterial({ color: '#276b47', roughness: 1 })
+    const matA = new THREE.MeshStandardMaterial({ color: '#ffd6ea', roughness: 1 })
+    const matB = new THREE.MeshStandardMaterial({ color: '#c9e6ff', roughness: 1 })
     const ground = new THREE.Group()
     const half = tiles / 2
     for (let x = -half; x < half; x++) {
@@ -124,9 +124,10 @@ export class PixelGooseScene {
     // 漂浮的像素方块（点缀，营造游戏节奏氛围）
     this.floaters = new THREE.Group()
     const floaterMat = [
-      new THREE.MeshStandardMaterial({ color: '#ffd23f', emissive: '#4a3a00', roughness: 0.6 }),
-      new THREE.MeshStandardMaterial({ color: '#57c7ff', emissive: '#003049', roughness: 0.6 }),
-      new THREE.MeshStandardMaterial({ color: '#ff5d8f', emissive: '#3a0018', roughness: 0.6 })
+      new THREE.MeshStandardMaterial({ color: '#ffc21f', roughness: 0.7 }),
+      new THREE.MeshStandardMaterial({ color: '#aee0ff', roughness: 0.7 }),
+      new THREE.MeshStandardMaterial({ color: '#ff9ec4', roughness: 0.7 }),
+      new THREE.MeshStandardMaterial({ color: '#d6bffb', roughness: 0.7 })
     ]
     for (let i = 0; i < 14; i++) {
       const size = 0.5 + Math.random() * 0.6
@@ -183,14 +184,19 @@ export class PixelGooseScene {
 
     // 大鹅的“节奏”待机动画
     if (this.goose) {
-      const { neck, head, tail, leftWing, rightWing } = this.goose.userData.parts
-      this.goose.position.y = Math.sin(t * 2.2) * 0.18
-      neck.rotation.x = Math.sin(t * 1.6) * 0.12 - 0.05
-      neck.rotation.z = Math.sin(t * 0.9) * 0.06
-      head.rotation.x = Math.sin(t * 1.6 + 1) * 0.08
+      const { head, tail, leftWing, rightWing } = this.goose.userData.parts
+      const bob = Math.sin(t * 2.2) * 0.16
+      this.goose.position.y = bob
+      // 大头轻轻晃动
+      head.rotation.z = Math.sin(t * 1.3) * 0.07
+      head.rotation.x = Math.sin(t * 1.6 + 1) * 0.05
+      head.position.y = 5.2 + bob * 0.4
+      // 尾巴翘动
       tail.rotation.z = Math.sin(t * 2.4) * 0.12
-      leftWing.rotation.z = -0.15 + Math.sin(t * 2.2) * 0.12
-      rightWing.rotation.z = 0.15 - Math.sin(t * 2.2) * 0.12
+      // 张开的翅膀上下扇动（围绕张开的基准角）
+      const flap = Math.sin(t * 3.0) * 0.18
+      leftWing.rotation.z = -0.35 + flap
+      rightWing.rotation.z = 0.35 - flap
 
       if (this.autoRotate && !this._userInteracting) {
         this.goose.rotation.y += 0.004
