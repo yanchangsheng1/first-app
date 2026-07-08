@@ -25,5 +25,11 @@ import { state, presets, setView, setPreset } from '../editorStore.js'
         {{ p.label }}
       </button>
     </div>
+
+    <div class="seg">
+      <RouterLink to="/canvas" class="!no-underline text-[color:var(--ink)] px-3 py-2.5 text-[8px] whitespace-nowrap hover:bg-[rgba(87,199,255,0.18)]">
+        🧩 无限画布
+      </RouterLink>
+    </div>
   </div>
 </template>

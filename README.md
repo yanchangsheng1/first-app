@@ -1,8 +1,9 @@
 # 🦢 Pixel Goose 3D
 
-像素游戏风格的白色大鹅 3D 配色编辑器，基于 **Vue 3 + Vite + Three.js + GSAP + Tailwind CSS**。
+基于 **Vue 3 + Vite + Vue Router + Three.js + GSAP + Tailwind CSS + Vue Flow** 的多页应用：
 
-一只用体素方块拼出的白色大鹅，配合像素化后处理（`RenderPixelatedPass`）呈现复古游戏质感，支持鼠标拖拽自由查看、部件换色/换材质，并已适配移动端。
+1. **`/` 大鹅展示编辑器**：像素游戏风格的 Q 版白色大鹅 3D 配色编辑器（体素模型 + 像素化后处理 `RenderPixelatedPass`），支持鼠标拖拽查看、部件换色/换材质，已适配移动端。
+2. **`/#/canvas` 无限画布**：基于 **Vue Flow** 的节点式流程编辑器，可缩放平移的无限画布，从左侧插件面板拖拽/点击添加节点，用连线把节点串成工作流。
 
 ## 特性
 
@@ -15,6 +16,17 @@
 - 🌈 **预设配色搭配（中间底部）**：经典奶白、蜜桃粉、薄荷奶绿、天空蓝、薰衣草、暗夜霓虹，一键换肤。
 - 🖱 **鼠标交互**：拖拽旋转、滚轮缩放、右键平移（`OrbitControls`），点击拾取部件。
 - 📱 **移动端适配**：基于 **Tailwind CSS** 响应式布局。桌面端为四周悬浮面板；移动端收纳为底部导航（图层 / 属性 / 配色），点击上滑弹出对应面板。
+
+## 🧩 无限画布（`/#/canvas`）
+
+基于 [Vue Flow](https://vueflow.dev/) 实现的节点式流程编辑器：
+
+- **无限画布**：滚轮缩放、拖拽平移，右下角 `Controls` 与右下小地图 `MiniMap` 辅助导航。
+- **插件节点**：先内置几种示例插件——素材上传 📤 / 参考图 🎯 / 文本提示 📝 / 图像生成 🖼️ / 视频生成 🎬。
+- **添加方式**：桌面端从左下角插件面板**拖拽**到画布（或点击加到画布中心）；移动端点右下角 ➕ 打开插件抽屉。
+- **连线成流程**：拖拽节点左右两侧的连接点即可连线（带流动动画），代表数据/流程走向。
+- **工具条**：适应视图 / 一键载入示例流程 / 清空画布；顶部可返回大鹅展示页。
+- 插件定义集中在 `src/components/flow/plugins.js`，新增插件只需在此追加一项。
 
 ## 快速开始
 
@@ -37,15 +49,22 @@ npm run preview  # 预览构建产物
 ├── vite.config.js             # Vue + Tailwind(@tailwindcss/vite) 插件
 ├── package.json
 └── src
-    ├── main.js
-    ├── App.vue                 # 响应式外壳：桌面悬浮面板 / 移动端底部导航+上滑面板
-    ├── editorStore.js          # 编辑器状态 + 动作（与场景解耦）
+    ├── main.js                 # 挂载 app + router + Vue Flow 样式
+    ├── App.vue                 # 应用外壳：<router-view />
+    ├── router.js               # 路由：/ 大鹅展示，/canvas 无限画布（懒加载）
+    ├── editorStore.js          # 大鹅编辑器状态 + 动作（与场景解耦）
     ├── styles/global.css       # Tailwind 引入 + 像素风组件类
+    ├── pages
+    │   ├── GooseEditor.vue      # 大鹅展示编辑器页
+    │   └── FlowCanvas.vue       # 无限画布页（Vue Flow）
     ├── components
-    │   ├── ViewBar.vue          # 顶部视角栏（2D/3D + 相机预设）
+    │   ├── ViewBar.vue          # 顶部视角栏（2D/3D + 相机预设 + 画布入口）
     │   ├── LayersPanel.vue      # 部件图层列表
     │   ├── PropertiesPanel.vue  # 选中部件属性
-    │   └── PalettesPanel.vue    # 预设配色
+    │   ├── PalettesPanel.vue    # 预设配色
+    │   └── flow
+    │       ├── PluginNode.vue    # 自定义插件节点（按类型渲染）
+    │       └── plugins.js        # 插件节点定义
     └── three
         ├── PixelGooseScene.js  # 场景/相机/灯光/后处理/GSAP过渡/射线拾取/动画循环
         └── buildGoose.js       # Q 版体素大鹅模型（按图层拆分可编辑材质）
