@@ -197,3 +197,38 @@ canvas {
     color: #05060f;
   }
 }
+
+/* ---------- Vue Flow 交互增强（无限画布） ---------- */
+.vue-flow__handle {
+  width: 15px;
+  height: 15px;
+  border-width: 2px;
+  border-color: #0f1530;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.vue-flow__handle:hover {
+  transform: scale(1.45);
+  box-shadow: 0 0 0 5px rgba(87, 199, 255, 0.22);
+  cursor: crosshair;
+}
+
+/* 连线过程中，所有输入口高亮，提示可放置位置 */
+.vue-flow.connecting .vue-flow__handle-left {
+  box-shadow: 0 0 0 6px rgba(87, 199, 255, 0.28);
+  transform: scale(1.35);
+}
+
+.vue-flow__edge-path {
+  stroke-width: 2;
+}
+
+.vue-flow__edge.selected .vue-flow__edge-path,
+.vue-flow__edge:hover .vue-flow__edge-path {
+  stroke: #ffd23f !important;
+  stroke-width: 3;
+}
+
+.vue-flow__node.selected .flow-node {
+  box-shadow: 0 0 0 2px #ffd23f, 0 8px 24px rgba(0, 0, 0, 0.5);
+}

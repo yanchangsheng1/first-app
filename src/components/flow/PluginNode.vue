@@ -14,22 +14,35 @@ const meta = computed(() => PLUGINS[props.data.type] || PLUGINS.prompt)
 
 <template>
   <div
-    class="flow-node w-[220px] rounded-xl border-2 bg-[#0f1530]/95 backdrop-blur-sm shadow-[0_8px_24px_rgba(0,0,0,0.45)] overflow-hidden transition-shadow"
+    class="flow-node relative w-[220px] rounded-xl border-2 bg-[#0f1530]/95 backdrop-blur-sm shadow-[0_8px_24px_rgba(0,0,0,0.45)] overflow-hidden transition-shadow"
+    :class="{ 'opacity-45 grayscale': data.bypass }"
     :style="{ borderColor: selected ? meta.accent : 'rgba(87,199,255,0.25)' }"
   >
-    <!-- 输入/输出连接点 -->
+    <!-- 输入/输出连接点（拖拽以连线） -->
     <Handle
       v-if="meta.hasIn"
+      id="in"
       type="target"
       :position="Position.Left"
-      :style="{ background: meta.accent, width: '11px', height: '11px', border: '2px solid #0f1530' }"
+      title="输入口：把其他节点的输出拖到这里"
+      :style="{ background: meta.accent }"
     />
     <Handle
       v-if="meta.hasOut"
+      id="out"
       type="source"
       :position="Position.Right"
-      :style="{ background: meta.accent, width: '11px', height: '11px', border: '2px solid #0f1530' }"
+      title="输出口：按住拖拽连到下一个节点"
+      :style="{ background: meta.accent }"
     />
+
+    <!-- bypass 徽标 -->
+    <span
+      v-if="data.bypass"
+      class="absolute right-2 top-2 z-10 rounded bg-black/60 px-1.5 py-0.5 text-[9px] font-semibold text-[#ffd23f]"
+    >
+      已跳过
+    </span>
 
     <!-- 头部 -->
     <div
@@ -38,10 +51,7 @@ const meta = computed(() => PLUGINS[props.data.type] || PLUGINS.prompt)
     >
       <span class="text-base leading-none">{{ meta.icon }}</span>
       <span class="text-[13px] font-semibold text-white/90">{{ data.title || meta.title }}</span>
-      <span
-        class="ml-auto w-2 h-2 rounded-full"
-        :style="{ background: meta.accent }"
-      ></span>
+      <span class="ml-auto w-2 h-2 rounded-full" :style="{ background: meta.accent }"></span>
     </div>
 
     <!-- 主体（按类型渲染） -->
