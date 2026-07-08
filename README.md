@@ -1,8 +1,8 @@
 # 🦢 Pixel Goose 3D
 
-像素游戏风格的白色大鹅 3D 展示，基于 **Vue 3 + Vite + Three.js**。
+像素游戏风格的白色大鹅 3D 配色编辑器，基于 **Vue 3 + Vite + Three.js + GSAP + Tailwind CSS**。
 
-一只用体素方块拼出的白色大鹅，配合像素化后处理（`RenderPixelatedPass`）呈现复古游戏质感，支持鼠标拖拽自由查看。
+一只用体素方块拼出的白色大鹅，配合像素化后处理（`RenderPixelatedPass`）呈现复古游戏质感，支持鼠标拖拽自由查看、部件换色/换材质，并已适配移动端。
 
 ## 特性
 
@@ -14,6 +14,7 @@
 - 🎥 **视角切换（顶部）**：**2D / 3D** 以及 **正面 / 侧面 / 底面 / 透视** 相机预设。
 - 🌈 **预设配色搭配（中间底部）**：经典奶白、蜜桃粉、薄荷奶绿、天空蓝、薰衣草、暗夜霓虹，一键换肤。
 - 🖱 **鼠标交互**：拖拽旋转、滚轮缩放、右键平移（`OrbitControls`），点击拾取部件。
+- 📱 **移动端适配**：基于 **Tailwind CSS** 响应式布局。桌面端为四周悬浮面板；移动端收纳为底部导航（图层 / 属性 / 配色），点击上滑弹出对应面板。
 
 ## 快速开始
 
@@ -33,12 +34,18 @@ npm run preview  # 预览构建产物
 
 ```
 ├── index.html
-├── vite.config.js
+├── vite.config.js             # Vue + Tailwind(@tailwindcss/vite) 插件
 ├── package.json
 └── src
     ├── main.js
-    ├── App.vue                 # 界面与 HUD 控制面板
-    ├── styles/global.css       # 全局像素风样式
+    ├── App.vue                 # 响应式外壳：桌面悬浮面板 / 移动端底部导航+上滑面板
+    ├── editorStore.js          # 编辑器状态 + 动作（与场景解耦）
+    ├── styles/global.css       # Tailwind 引入 + 像素风组件类
+    ├── components
+    │   ├── ViewBar.vue          # 顶部视角栏（2D/3D + 相机预设）
+    │   ├── LayersPanel.vue      # 部件图层列表
+    │   ├── PropertiesPanel.vue  # 选中部件属性
+    │   └── PalettesPanel.vue    # 预设配色
     └── three
         ├── PixelGooseScene.js  # 场景/相机/灯光/后处理/GSAP过渡/射线拾取/动画循环
         └── buildGoose.js       # Q 版体素大鹅模型（按图层拆分可编辑材质）
@@ -46,10 +53,15 @@ npm run preview  # 预览构建产物
 
 ## 界面布局
 
+**桌面端（≥ 768px）**
 - **顶部**：2D/3D 切换 + 正面/侧面/底面/透视 相机预设。
 - **左侧**：部件图层列表，点击选中要编辑的部件。
 - **右侧**：选中部件的属性（颜色 / 材质质感 / 描边 / 像素颗粒 / 自动旋转）。
 - **中间底部**：预设配色搭配，一键切换整体配色。
+
+**移动端（< 768px）**
+- **顶部**：视角栏自动换行收缩。
+- **底部导航**：图层 / 属性 / 配色 三个标签，点击从底部上滑出对应面板，再次点击收起。
 
 ## 操作说明
 
