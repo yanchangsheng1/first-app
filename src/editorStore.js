@@ -56,7 +56,8 @@ export const state = reactive({
   pixelSize: 5,
   autoRotate: true,
   outlineThickness: 1,
-  outlineVisible: true
+  outlineVisible: true,
+  destroyMode: false
 })
 
 export const selectedLayer = computed(
@@ -134,4 +135,15 @@ export function toggleOutline() {
 export function toggleAuto() {
   state.autoRotate = !state.autoRotate
   scene?.setAutoRotate(state.autoRotate)
+}
+
+// 🔨 拆家模式：开启后点击像素块会将其“炸”掉；关闭恢复选中图层行为
+export function toggleDestroyMode() {
+  state.destroyMode = !state.destroyMode
+  scene?.setDestroyMode(state.destroyMode)
+}
+
+// 复原：把所有被拆掉的方块重新长回来
+export function resetGoose() {
+  scene?.resetDestroyed()
 }

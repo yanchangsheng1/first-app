@@ -1,5 +1,5 @@
 <script setup>
-import { state, presets, setView, setPreset } from '../editorStore.js'
+import { state, presets, setView, setPreset, toggleDestroyMode, resetGoose } from '../editorStore.js'
 </script>
 
 <template>
@@ -24,6 +24,13 @@ import { state, presets, setView, setPreset } from '../editorStore.js'
       >
         {{ p.label }}
       </button>
+    </div>
+
+    <div class="seg">
+      <button :class="{ on: state.destroyMode }" @click="toggleDestroyMode()">
+        🔨 拆家模式
+      </button>
+      <button @click="resetGoose()">🪄 复原</button>
     </div>
 
     <div class="seg">

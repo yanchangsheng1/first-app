@@ -35,6 +35,12 @@ export class PixelGooseScene {
     this._outlineScale = 1
     this._raf = null
 
+    // 拆家（破坏）模式相关
+    this.mode = 'select' // 'select' | 'destroy'
+    this.destroyed = [] // 记录被破坏的方块，用于复原
+    this._savedAutoRotate = null
+    this._shakeAmp = 0 // 相机抖动幅度，逐帧衰减
+
     this.raycaster = new THREE.Raycaster()
     this.pointer = new THREE.Vector2()
 
@@ -211,6 +217,12 @@ export class PixelGooseScene {
       if (moved > 5) return // 拖拽旋转，不算点击
       this._pick(e)
     })
+    // 拆家模式下：按住并拖动可连续破坏（加分项）
+    el.addEventListener('pointermove', (e) => {
+      if (this.mode !== 'destroy') return
+      if (e.buttons !== 1) return // 仅在按住左键时
+      this._pick(e)
+    })
   }
 
   _pick(e) {
@@ -219,10 +231,15 @@ export class PixelGooseScene {
     this.pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1
     this.raycaster.setFromCamera(this.pointer, this.camera)
     const hits = this.raycaster.intersectObjects(this.selectableMeshes, false)
-    if (hits.length) {
-      const layer = hits[0].object.userData.layer
-      if (layer) this.selectLayer(layer)
+    if (!hits.length) return
+
+    if (this.mode === 'destroy') {
+      this._destroyBlock(hits[0].object)
+      return
     }
+    // 选中模式：保持原有行为
+    const layer = hits[0].object.userData.layer
+    if (layer) this.selectLayer(layer)
   }
 
   // ---------------- 相机 ----------------
@@ -360,6 +377,160 @@ export class PixelGooseScene {
     this.onSelectCb = cb
   }
 
+  // ---------------- 拆家 / 破坏模式 ----------------
+  setMode(mode) {
+    if (mode === this.mode) return
+    this.mode = mode
+    if (mode === 'destroy') {
+      // 破坏模式下关闭自动旋转，避免点击目标乱跑
+      this._savedAutoRotate = this.autoRotate
+      this.autoRotate = false
+    } else if (this._savedAutoRotate !== null) {
+      // 退出破坏模式时恢复原自动旋转设置
+      this.autoRotate = this._savedAutoRotate
+      this._savedAutoRotate = null
+    }
+  }
+
+  setDestroyMode(on) {
+    this.setMode(on ? 'destroy' : 'select')
+  }
+
+  // 破坏单个方块：命中描边子块时破坏其父方块；父方块被移除后描边子块随之消失
+  _destroyBlock(hitMesh) {
+    let mesh = hitMesh
+    if (mesh.userData.isOutline && mesh.parent && mesh.parent.isMesh) {
+      mesh = mesh.parent
+    }
+    const idx = this.selectableMeshes.indexOf(mesh)
+    if (idx === -1) return // 已被破坏或不是可破坏的方块
+
+    const parent = mesh.parent
+    if (!parent) return
+
+    // 记录用于复原的信息
+    this.destroyed.push({
+      mesh,
+      parent,
+      position: mesh.position.clone(),
+      quaternion: mesh.quaternion.clone(),
+      scale: mesh.scale.clone(),
+      visible: mesh.visible
+    })
+
+    // 从可拾取列表移除，避免再次命中
+    this.selectableMeshes.splice(idx, 1)
+
+    // 记录世界坐标用于生成碎块，然后把原方块从场景移除（保留引用用于复原）
+    const worldPos = new THREE.Vector3()
+    mesh.getWorldPosition(worldPos)
+    parent.remove(mesh)
+
+    this._spawnShatter(worldPos, mesh)
+    this._shakeAmp = 0.45 // 触发相机轻微抖动
+  }
+
+  // 在指定世界坐标炸裂出若干小碎块，飞散 + 重力下落 + 旋转 + 缩小淡出
+  _spawnShatter(worldPos, srcMesh) {
+    const p = srcMesh.geometry?.parameters || {}
+    const w = p.width || 1
+    const h = p.height || 1
+    const d = p.depth || 1
+    const baseColor =
+      srcMesh.material && srcMesh.material.color
+        ? srcMesh.material.color.clone()
+        : new THREE.Color('#ffffff')
+
+    const count = 7
+    const g = 14 // 模拟重力加速度
+    for (let i = 0; i < count; i++) {
+      const fw = w * (0.28 + Math.random() * 0.3)
+      const fh = h * (0.28 + Math.random() * 0.3)
+      const fd = d * (0.28 + Math.random() * 0.3)
+      const geo = new THREE.BoxGeometry(fw, fh, fd)
+      const mat = new THREE.MeshStandardMaterial({
+        color: baseColor.clone(),
+        roughness: 0.85,
+        metalness: 0,
+        flatShading: true,
+        transparent: true
+      })
+      const frag = new THREE.Mesh(geo, mat)
+      const start = worldPos.clone().add(
+        new THREE.Vector3(
+          (Math.random() - 0.5) * w * 0.4,
+          (Math.random() - 0.5) * h * 0.4,
+          (Math.random() - 0.5) * d * 0.4
+        )
+      )
+      frag.position.copy(start)
+      this.scene.add(frag)
+
+      // 初速度：向外 + 向上飞散
+      const vel = new THREE.Vector3(
+        (Math.random() - 0.5) * 9,
+        3.5 + Math.random() * 4.5,
+        (Math.random() - 0.5) * 9
+      )
+      const spin = new THREE.Vector3(
+        (Math.random() - 0.5) * 0.6,
+        (Math.random() - 0.5) * 0.6,
+        (Math.random() - 0.5) * 0.6
+      )
+      const life = 0.85 + Math.random() * 0.35
+      const anim = { t: 0 }
+      gsap.to(anim, {
+        t: life,
+        duration: life,
+        ease: 'none',
+        onUpdate: () => {
+          const tt = anim.t
+          frag.position.set(
+            start.x + vel.x * tt,
+            start.y + vel.y * tt - 0.5 * g * tt * tt,
+            start.z + vel.z * tt
+          )
+          frag.rotation.x += spin.x
+          frag.rotation.y += spin.y
+          frag.rotation.z += spin.z
+          const k = Math.max(0.001, 1 - tt / life)
+          frag.scale.setScalar(k)
+          mat.opacity = Math.min(1, k * 1.6)
+        },
+        onComplete: () => {
+          this.scene.remove(frag)
+          geo.dispose()
+          mat.dispose()
+        }
+      })
+    }
+  }
+
+  // 复原：把所有被破坏的方块恢复到原 parent，并播放弹入动画
+  resetDestroyed() {
+    if (!this.destroyed.length) return
+    const items = this.destroyed
+    this.destroyed = []
+    items.forEach((it, i) => {
+      const { mesh, parent, position, quaternion, scale, visible } = it
+      parent.add(mesh)
+      mesh.position.copy(position)
+      mesh.quaternion.copy(quaternion)
+      mesh.visible = visible
+      this.selectableMeshes.push(mesh)
+      // 从 0 弹回原尺寸，带回弹缓动，逐个错峰长回来
+      mesh.scale.set(0.001, 0.001, 0.001)
+      gsap.to(mesh.scale, {
+        x: scale.x,
+        y: scale.y,
+        z: scale.z,
+        duration: 0.5,
+        delay: i * 0.035,
+        ease: 'back.out(2.4)'
+      })
+    })
+  }
+
   getLayers() {
     return this.layers.map((l) => ({ name: l.name, label: l.label, color: l.color }))
   }
@@ -411,7 +582,20 @@ export class PixelGooseScene {
     }
 
     this.controls.update()
+
+    // 破坏时的相机抖动：渲染前临时偏移，渲染后还原，避免与 OrbitControls 冲突漂移
+    let shakeRestore = null
+    if (this._shakeAmp > 0.001) {
+      const a = this._shakeAmp
+      shakeRestore = this.camera.position.clone()
+      this.camera.position.x += (Math.random() - 0.5) * a
+      this.camera.position.y += (Math.random() - 0.5) * a
+      this.camera.position.z += (Math.random() - 0.5) * a
+      this._shakeAmp *= 0.85
+    }
+
     this.composer.render()
+    if (shakeRestore) this.camera.position.copy(shakeRestore)
   }
 
   dispose() {
@@ -419,6 +603,16 @@ export class PixelGooseScene {
     window.removeEventListener('resize', this._onResize)
     gsap.killTweensOf('*')
     this.controls.dispose()
+    // 已被破坏移出场景图的方块不会被下面的 traverse 覆盖，这里单独释放
+    this.destroyed.forEach(({ mesh }) => {
+      mesh.traverse((o) => {
+        if (!o.isMesh) return
+        o.geometry?.dispose()
+        if (Array.isArray(o.material)) o.material.forEach((m) => m.dispose())
+        else o.material?.dispose()
+      })
+    })
+    this.destroyed = []
     this.scene.traverse((o) => {
       if (o.isMesh) {
         o.geometry?.dispose()
