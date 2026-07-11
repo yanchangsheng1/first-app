@@ -1,22 +1,28 @@
 {
-  "name": "first-app",
+  "name": "pixel-goose-3d",
   "version": "1.0.0",
-  "description": "第一个代码仓库",
-  "main": "index.js",
+  "private": true,
+  "description": "像素风格的白色大鹅 3D 展示 (Vue3 + Vite + three.js)",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/yanchangsheng1/first-app.git"
-  },
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/yanchangsheng1/first-app/issues"
-  },
-  "homepage": "https://github.com/yanchangsheng1/first-app#readme",
   "dependencies": {
-    "express": "^4.15.2"
+    "@vue-flow/background": "^1.3.2",
+    "@vue-flow/controls": "^1.1.3",
+    "@vue-flow/core": "^1.48.2",
+    "@vue-flow/minimap": "^1.5.4",
+    "gsap": "^3.15.0",
+    "three": "^0.169.0",
+    "vue": "^3.5.12",
+    "vue-router": "^4.6.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.2",
+    "@vitejs/plugin-vue": "^5.1.4",
+    "tailwindcss": "^4.3.2",
+    "vite": "^5.4.10"
   }
 }

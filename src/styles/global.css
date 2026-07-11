@@ -1,0 +1,234 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+@import 'tailwindcss';
+
+:root {
+  --pixel-font: 'Press Start 2P', 'Courier New', monospace;
+  --ink: #f4f9ff;
+  --accent: #ffd23f;
+  --accent-2: #57c7ff;
+  --panel: rgba(12, 18, 40, 0.78);
+  --edge: #2b3a6b;
+}
+
+html,
+body,
+#app {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--pixel-font);
+  background: #05060f;
+  color: var(--ink);
+  -webkit-font-smoothing: none;
+  image-rendering: pixelated;
+}
+
+button,
+input {
+  font-family: inherit;
+}
+
+canvas {
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+::selection {
+  background: var(--accent);
+  color: #05060f;
+}
+
+/* 像素风组件类（用普通 CSS 定义视觉，布局/响应交给 Tailwind 工具类） */
+@layer components {
+  .pixel-panel {
+    background: var(--panel);
+    border: 3px solid var(--edge);
+    box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(4px);
+  }
+
+  .pixel-title {
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 1px;
+    line-height: 1.5;
+  }
+
+  .seg {
+    display: inline-flex;
+    border: 3px solid var(--edge);
+    background: var(--panel);
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
+  }
+
+  .seg > button {
+    flex: 1 1 auto;
+    font-size: 8px;
+    color: var(--ink);
+    background: transparent;
+    border: none;
+    padding: 9px 11px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .seg > button + button {
+    border-left: 2px solid var(--edge);
+  }
+
+  .seg > button:hover {
+    background: rgba(87, 199, 255, 0.18);
+  }
+
+  .seg > button.on {
+    background: var(--accent);
+    color: #05060f;
+  }
+
+  .pixel-toggle {
+    width: 100%;
+    font-size: 8px;
+    color: var(--ink);
+    background: var(--panel);
+    border: 3px solid var(--edge);
+    padding: 9px;
+    cursor: pointer;
+    box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.3);
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .pixel-toggle.on {
+    background: var(--accent);
+    color: #05060f;
+  }
+
+  .layer-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 9px;
+    font-size: 9px;
+    line-height: 1.4;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+
+  .layer-item:hover {
+    background: rgba(87, 199, 255, 0.12);
+  }
+
+  .layer-item.active {
+    border-color: var(--accent);
+    background: rgba(255, 210, 63, 0.14);
+  }
+
+  .layer-dot {
+    width: 14px;
+    height: 14px;
+    border: 2px solid #05060f;
+    flex-shrink: 0;
+  }
+
+  .field-label {
+    display: block;
+    font-size: 8px;
+    color: var(--accent-2);
+    margin-bottom: 8px;
+    line-height: 1.6;
+  }
+
+  .pixel-color {
+    width: 44px;
+    height: 34px;
+    border: 3px solid var(--edge);
+    background: none;
+    padding: 0;
+    cursor: pointer;
+  }
+
+  .pixel-range {
+    width: 100%;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  .palette-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: 3px solid var(--edge);
+    padding: 7px 9px;
+    cursor: pointer;
+    transition: transform 0.12s, border-color 0.15s;
+  }
+
+  .palette-btn:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent);
+  }
+
+  .palette-swatch {
+    width: 12px;
+    height: 12px;
+    border: 2px solid #05060f;
+  }
+
+  .mobile-nav-btn {
+    flex: 1 1 0;
+    font-size: 9px;
+    color: var(--ink);
+    background: transparent;
+    border: none;
+    padding: 12px 4px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .mobile-nav-btn.on {
+    background: var(--accent);
+    color: #05060f;
+  }
+}
+
+/* ---------- Vue Flow 交互增强（无限画布） ---------- */
+.vue-flow__handle {
+  width: 15px;
+  height: 15px;
+  border-width: 2px;
+  border-color: #0f1530;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.vue-flow__handle:hover {
+  transform: scale(1.45);
+  box-shadow: 0 0 0 5px rgba(87, 199, 255, 0.22);
+  cursor: crosshair;
+}
+
+/* 连线过程中，所有输入口高亮，提示可放置位置 */
+.vue-flow.connecting .vue-flow__handle-left {
+  box-shadow: 0 0 0 6px rgba(87, 199, 255, 0.28);
+  transform: scale(1.35);
+}
+
+.vue-flow__edge-path {
+  stroke-width: 2;
+}
+
+.vue-flow__edge.selected .vue-flow__edge-path,
+.vue-flow__edge:hover .vue-flow__edge-path {
+  stroke: #ffd23f !important;
+  stroke-width: 3;
+}
+
+.vue-flow__node.selected .flow-node {
+  box-shadow: 0 0 0 2px #ffd23f, 0 8px 24px rgba(0, 0, 0, 0.5);
+}
